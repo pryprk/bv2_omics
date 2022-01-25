@@ -1,0 +1,5 @@
+"0","LFQ_edgeR_4 <- LFQ_edgeR[ rowSums(cpm(LFQ_edgeR) == 0 ) <= (8 - 4) , ]"
+"0","LFQ_edgeR_4 <- LFQ_edgeR_4 %>% calcNormFactors()"
+"0","LFQ_edgeR_4 <- LFQ_edgeR_4 %>% estimateGLMCommonDisp(design = design)"
+"0","lrt_LFQ_4 <- glmLRT(glmFit(LFQ_edgeR_4, design), contrast = contrasts) %>% decideTestsDGE(p.value = 0.10)"
+"0","plotSmear(LFQ_edgeR_4, de.tags = rownames(lrt_LFQ_4)[lrt_LFQ_4 %>% as.logical()])"

@@ -1,0 +1,28 @@
+{
+    "id": "7C3E564D",
+    "path": "~/Documents/r_projects/bv2-omics/r_docs/bv2-proteomics.Rmd",
+    "project_path": "r_docs/bv2-proteomics.Rmd",
+    "type": "r_markdown",
+    "hash": "938620233",
+    "contents": "",
+    "dirty": false,
+    "created": 1642802933974.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "tempName": "Untitled1",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "91,81",
+        "scrollLine": "72",
+        "last_setup_crc32": ""
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1643132124,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1643132124436,
+    "read_only": false,
+    "read_only_alternatives": []
+}

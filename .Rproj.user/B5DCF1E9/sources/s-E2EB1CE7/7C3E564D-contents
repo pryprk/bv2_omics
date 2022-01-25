@@ -1,0 +1,94 @@
+---
+title: "bv2-proteomics"
+author: "priya prakash"
+date: "1/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The goal of this object is to analyze the proteomics data obtained from BV2 microglial cells. The cells were treated with 500 nM amyloid beta or vehicle-control for 1 hour and collected for proteomic analysis. There were 4 biological replicates and therefore 8 total samples. Label-free quantitative (LFQ) proteomics was performed and data obtained.
+
+Calling all the packages
+```{r}
+library(dplyr)
+library(tidyverse)
+library(edgeR)
+library(ggfortify)
+library(plyr)
+library(ggplot2)
+library(scales)
+library(grid)
+library(pheatmap)
+library(RColorBrewer)
+library(ggeasy)
+library(ggrepel)
+```
+
+Calling the ggbiplot_script
+```{r}
+source("ggbiplot_script.R")
+```
+
+Loading data from the proteomics output file
+```{r}
+protein_groups <- read_csv("../data/080319_proteinGroups.csv")
+protein_groups_lfq <- protein_groups %>%
+  select(protein_ids = `majority_protein_ids`,
+         AB1 = `lfq_intensity_abeta1`,
+         AB2 = `lfq_intensity_abeta2`,
+         AB3 = `lfq_intensity_abeta3`,
+         AB4 = `lfq_intensity_abeta4`,
+         VH1 = `lfq_intensity_veh1`,
+         VH2 = `lfq_intensity_veh2`,
+         VH3 = `lfq_intensity_veh3`,
+         VH4 = `lfq_intensity_veh4`
+  )
+```
+
+Check for negative binomial distribution
+```{r}
+protein_groups_lfq %>%
+  ggplot() +
+    geom_histogram(aes(AB1, fill = "AB", color = "1"), bins = 100) +
+    geom_histogram(aes(AB2, fill = "AB", color = "2"), bins = 100) +
+    geom_histogram(aes(AB3, fill = "AB", color = "3"), bins = 100) +
+    geom_histogram(aes(AB4, fill = "AB", color = "4"), bins = 100) +
+    geom_histogram(aes(VH1, fill = "VH", color = "1"), bins = 100) +
+    geom_histogram(aes(VH2, fill = "VH", color = "2"), bins = 100) +
+    geom_histogram(aes(VH3, fill = "VH", color = "3"), bins = 100) +
+    geom_histogram(aes(VH4, fill = "VH", color = "4"), bins = 100) +
+    scale_y_continuous(trans = "log1p", breaks = c(0, 1, 1000, 2000, 4000, 6000))
+```
+
+Do edgeR on the LFQ variables. Create the initial edgeR object with all the values.
+```{r}
+groups = c("AB", "AB", "AB", "AB",
+           "VH", "VH", "VH", "VH") %>%
+  factor(levels = c("AB", "VH")
+)
+design = model.matrix(~0+groups)
+contrasts = makeContrasts(
+  H = groupsAB - groupsVH,
+  levels = design
+)
+LFQ_edgeR <- DGEList(
+  counts = protein_groups_lfq %>%
+    mutate(protein_ids = make.unique(protein_ids)) %>%
+    na.omit() %>%
+    column_to_rownames("protein_ids"),
+  group = c(1,1,1,1, 2,2,2,2)
+)
+```
+
+Filter out rows so that each row has at least four non-zero values.
+```{r}
+LFQ_edgeR_4 <- LFQ_edgeR[ rowSums(cpm(LFQ_edgeR) == 0 ) <= (8 - 4) , ]
+LFQ_edgeR_4 <- LFQ_edgeR_4 %>% calcNormFactors()
+LFQ_edgeR_4 <- LFQ_edgeR_4 %>% estimateGLMCommonDisp(design = design)
+lrt_LFQ_4 <- glmLRT(glmFit(LFQ_edgeR_4, design), contrast = contrasts) %>% decideTestsDGE(p.value = 0.10)
+plotSmear(LFQ_edgeR_4, de.tags = rownames(lrt_LFQ_4)[lrt_LFQ_4 %>% as.logical()])
+```
+
